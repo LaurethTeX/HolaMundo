@@ -1,0 +1,415 @@
+
+\documentclass[12pt,journal,compsoc]{IEEEtran}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{listings}
+
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+\lstset{
+    %language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+    frame=lines,
+    showtabs=false,
+    showspaces=false,
+    showstringspaces=false,
+    keywordstyle=\color{red}\bfseries,
+    stringstyle=\color{green!50!black},
+    commentstyle=\color{gray}\itshape,
+    %numbers=left,
+    captionpos=t,
+    escapeinside={\%*}{*)}
+}
+
+
+
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+
+\begin{document}
+
+\title{Gorilla Measure: Medici\'on del consumo de energ\'ia}
+%
+%
+
+\author{Brian Guti\'errez, Andr\'es Suarez, Arturo Carri\'on, Alejandro Barnard, H\'ector Mej\'ia, Andrea Hidalgo, Gonzalo Z\'u\~niga, Luis Alfredo Wulf \\\textit{Ingenier\'ia Mecatr\'onica, Facultad de Ingenier\'ia, Universidad La Salle}}
+
+
+% The paper headers
+\markboth{Tarea 3: Dispositivo medidor de consumo de energ\'ia, Dise\~no en Ingenier\'ia}%
+{}
+
+\IEEEtitleabstractindextext{%
+\begin{abstract}
+En este documento se presentan de manera desglosada las etapas del proceso de dise\~no realizado por nuestro equipo de trabajo para la realizaci\'on del prototipo para un sistema de monitoreo de consumo de energ\'ia en \emph{KWh} de una casa particular, tomando en cuenta la implementaci\'on de un m\'etodo para la obtenci\'on de dicha medici\'on con \emph{Arduino Leonardo + Ethernet Shield} con comunicaci\'on a un \emph{Smartphone} con sistema operativo \emph{Android} e \emph{iOS} por medio de \emph{Xively}, una base de datos en l\'inea basado en el concepto \textsc{The Internet of Things}. El nombre dispuesto por los miembros del equipo para el dispositivo es \emph{Gorilla Measure}.
+\end{abstract}
+
+% Note that keywords are not normally used for peerreview papers.
+\begin{IEEEkeywords}
+ Arduino Leonardo, Ethernet Shield, Xively, Consumo de corriente 
+\end{IEEEkeywords}}
+
+
+% make the title area
+\maketitle
+
+
+% To allow for easy dual compilation without having to reenter the
+% abstract/keywords data, the \IEEEtitleabstractindextext text will
+% not be used in maketitle, but will appear (i.e., to be "transported")
+% here as \IEEEdisplaynontitleabstractindextext when the compsoc 
+% or transmag modes are not selected <OR> if conference mode is selected 
+% - because all conference papers position the abstract like regular
+% papers do.
+\IEEEdisplaynontitleabstractindextext
+% \IEEEdisplaynontitleabstractindextext has no effect when using
+% compsoc or transmag under a non-conference mode.
+
+
+
+% For peer review papers, you can put extra information on the cover
+% page as needed:
+% \ifCLASSOPTIONpeerreview
+% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
+% \fi
+%
+% For peerreview papers, this IEEEtran command inserts a page break and
+% creates the second title. It will be ignored for other modes.
+\IEEEpeerreviewmaketitle
+
+
+
+\section{Identificaci\'on de la necesidad}
+\IEEEPARstart{C}{onstruir} un dispositivo que mida el consumo de corriente en casas particulares y guarde un hist\'orico que el usuario pueda consultar. 
+	\subsection{Identificar al cliente}
+    \begin{description}
+    	\item\textbf{Mtro. Ram\'on Ch\'avez}: Profesor que evaluar\'a la tarea de acuerdo a sus requerimientos, especificaciones y  manera de evaluaci\'on.
+        \item\textbf{Ciudadano mexicano}: Necesita el dispositivo barato para hacer una comparaci\'on de consumo de luz de CFE. Tambi\'en para poder administrar su consumo de energ\'ia y disminuir la cantidad de dinero que paga en su recibo de luz. 
+    \end{description}
+    \subsection{Requerimientos y especificaciones del cliente}
+    Para deteminar estos se realiz\'o una encuesta al cliente que propuso la necesidad y est\'o fue lo que se determin\'o.
+    \begin{itemize}
+    	
+        \item Que sea el costo del producto sea menor a \$1000 MXN
+		\item Que la interfaz con el usuario sea f\'acil y gr\'afica
+		\item Que avise si hay un alto consumo
+		\item Que mande por correo un reporte diario/semanal \'o una App compatible con Android
+		\item Que haya un hist\'orico del consumo
+		\item Que registre constantemente
+		\item Que la lectura sea independiente al medidor
+
+    \end{itemize}
+\section{Investigaci\'on Preliminar}
+	Durante esta etapa primero se recopil\'o informaci\'on sobre las caracter\'isticas que determinan la obtenci\'on de una medida de consumo de energ\'ia, como son:
+    \begin{itemize}
+    	\item An\'alisis matem\'atico para la obtenci\'on de la energ\'ia consumida por un circuito el\'ectrico.
+        \item ?`Qu\'e factores generan variaciones en el c\'alculo realizado.?
+        \item Comportamiento de los sistemas el\'ectricos en M\'exico.
+    \end{itemize}
+    Tambi\'en  nos informamos si esta necesidad ya se hab\'ia resuelto de la manera que se nos ha solicitado donde encontramos varias alternativas que inclu\'ian la implementaci\'on  microcontroladores Arduino. Algunos de estos fueron:
+     \begin{itemize}
+     	\item\textbf{Arduino based wireless powermeter}: En este sistema el hardware se compone de tres partes: un sensor de captura, una tarjeta MCU y una tarjeta inal\'ambrica. El hardware del sensor consta de los transductores de corriente y circuito rectificador, conectado para un convertidor anal\'ogico a digital (ADC) de la MCU. La tarjeta MCU es un Arduino. La conexi\'on inal\'ambrica se obtiene por un escudo dise\~nado para adjuntarse con el Arduino, creado por AsyncLabs.
+        \item\textbf{How to build an Arduino energy monitor - measuring mains voltage and current}: Este art\'iculo es una gu\'ia detalla c\'omo construir un  monitor de electricidad de energ\'ia en que se puede utilizar para medir la cantidad de energ\'ia el\'ectrica que utiliza una casa. Mide voltaje adaptador de alimentaci\'on de CA a CA y corriente con un sensor de clip de CT, lo que hace la instalaci\'on muy seguro ya que no requiere un trabajo de alto voltaje.
+        \item\textbf{Arduino energy shield y pachube}: En este \'ultimo encontramos un tutorial para la fabricaci\'on del dispositivo muy similar a la mencionada anteriormente pero utilizando 2 shields arduino diferentes y la implementaci\'on del uso de una p\'agina de internet (www.pachube.com) la cual nos permite crear una cuenta y subir los datos para graficar con respecto al tiempo.
+     \end{itemize}
+     En cuanto al estado del arte pudimos observar que a pesar de existir alternativas de medici\'on es literalmente muy nueva la creaci\'on de estos sistemas, un ejemplo son los sensores de la empresa Open Energy Monitor, los modelos que vimos ya indican el consumo y en algunos casos el precio de los KWh pero dichos medidores son muy costosos para el uso comercial y su salida de informaci\'on es en un display o como se\~nal de salida por lo que no cumplen al cien por ciento con la cobertura de la necesidad. En cuanto a las novedades en el desarrollo de medidores con comunicaci\'on se puede mencionar al IPN por su reciente invenci\'on. Especialistas del IPN desarrollan un medidor con capacidad de comunicaci\'on inal\'ambrica, que monitorea las condiciones de operaci\'on de un sistema de distribuci\'on el\'ectrica en tiempo real que evita anomal\'ias y determina el consumo verdadero de energ\'ia.
+En cuanto a la realizaci\'on del estudio de mercado no encontramos alg\'un producto totalmente funcional, econ\'omico y “amigable” en nuestra investigaci\'on por lo que abrir\'iamos campo a un nuevo producto en el mercado.
+
+\section{Planteamiento de Objetivos}
+	\subsection{Antecedentes del problema}
+    	?`Por qu\'e el mexicano tiene la necesidad de medir su consumo? Primeramente porque podr\'ia haber desconfianza en las lecturas que hace el medidor y/o los c\'alculos de consumo que realiza CFE y por lo tanto lo que cobra otra raz\'on podr\'ia ser porque hay alg\'un consumo \emph{no registrado por el usuario} en su instalaci\'on el\'ectrica \'o porque simplemente quiere hacer una mejor gesti\'on de su consumo de energ\'ia y reducir el impacto que tiene el consumo de energ\'ia en su casa en el ambiente.
+    \subsection{Objetivos}
+    	\begin{itemize}
+        	\item El dispositivo \emph{Gorilla Measure} debe ser capaz de realizar una medici\'on discretizada del consumo que contenga la informaci\'on necesaria para determinar el consumo diario, consumo semanal, consumo mensual y m\'as a largo plazo un consumo anual. 
+			\item El dispositivo GM debe guardar un hist\'orico de consumo que se pueda consultar por medio de un Smartphone o por internet.
+
+        \end{itemize}
+\section{Especificaciones de Dise\~no}
+\emph{?`Qu\'e debe hacer el dispositivo?, La funcionalidad}\\\\
+Las funciones que debe tener son: Medir la corriente, analizar la se\~nal del sensor, convertir la se\~nal del sensor a algo que se pueda interpretar como amperes, hacer el c\'alculo de potencia, registrar los datos, comunicarlos al usuario, guardar el hist\'orico de consumo.\\
+
+
+\emph{Lo que debe hacer ...}\\\\
+El dispositivo debe realizar una medici\'on de corriente por medio de un sensor, calcular la potencia tomando un voltaje \emph{medido} como constante y mandar los datos de comportamiento del sensor por medio de Ethernet a una base de datos en l\'inea llamada Xively y est\'a debe realizar una gr\'afico con el hist\'orico de lecturas que se har\'an cada 10 segundos.  Al realizar esto se podr\'a acceder con el Feed ID desde aplicaciones como The Internet of Things en iOS \'o Xively Feeds en Android para consultar el comportamiento de consumo.
+
+\subsection{Diagrama de An\'alisis funcional descendente}
+Se puede consultar, revisando la tarea 2 que ya se ha entregado. 
+	
+\section{Ideaci\'on \'o Invenci\'on}
+Se realizaron cuatro lluvias de ideas para resolver los cuatro problemas principales.
+	\begin{itemize}
+    	\item Formas de medir la corriente consumida
+        \item Procesamiento de Informaci\'on
+        \item Comunicaci\'on e hist\'orico
+        \item Interfaz de Usuario
+    \end{itemize}
+
+Estas lluvias de indeas se realizar\'on a trav\'ez delproceso de dise\~no entre todos los miembros del equipo, cada uno propuso sus ideas, se continu\'o la metodolog\'ia hasta combinarlas y obtener las siguientes ideas generales:
+\begin{itemize}
+	\item Medidor con base en Raspberry PI
+	\item C\'amara IP montada en medidor
+	\item Sistema basado en una matraca
+	\item Medidor con base en Arduino
+	\item Medir voltaje y corriente y hacer los c\'alculos a mano y comunicar con una operadora
+
+\end{itemize}
+
+\section{An\'alisis}
+	\subsection{Medidor con base en Rasperry Pi}
+    La computadora Raspberry puede ser conectada a un monitor donde nosotros podemos leer de forma num\'erica el valor de corriente que est\'a siendo consumido  as\'i como llegar a programar un c\'odigo que nos ayude a calcular los Kwh que estamos consumiendo. Esta computadora tambi\'en nos puede ser \'util para dar los datos en el momento requerido.
+    \subsection{C\'amara IP montada en medidor}
+    Las c\'amaras IP permiten ver en tiempo real qu\'e est\'a pasando en un lugar, aunque est\'e a miles de kil\'ometros de distancia. Son c\'amaras de v\'ideo de gran calidad que tienen incluido un ordenador a trav\'es del que se conectan directamente a Internet.
+Una c\'amara IP (o una c\'amara de red) es un dispositivo que contiene:
+\begin{itemize}
+	\item Una c\'amara de v\'ideo de gran calidad, que capta las im\'agenes
+	\item Un chip de compresi\'on que prepara las im\'agenes para ser transmitidas por Internet, y
+	\item Un ordenador que se conecta por s\'i mismo a Internet
+
+\end{itemize}
+
+\subsection{Sistema basado en matraca}
+	Para \'este sistema se requiere de un medidor de corriente que env\'ie una se\~nal a un motor, el cual tendr\'ia incorporado un disco con un tope configurado para dar una vuelta por cada cierta cantidad de energ\'ia consumida. El tope deber\'ia de pasar por un sensor que posee una pesta\~na para recibir una se\~nal. Tras haber activado el sensor  la se\~nal ser\'ia enviada a una computadora para posteriormente recopilar y sumar las mediciones para graficar enviar los resultados al dispositivo m\'ovil.
+    
+\subsection{Medidor con base en Arduino}
+Este fue el que decidimos desarrollar finalmente.  Nuestro proyecto se divide en 2 procesos principales: medici\'on de potencia y comunicaci\'on. Lo primero, y por ello lo m\'as importante es el proceso de medici\'on. Como sabemos  que la potencia es el producto de la corriente el\'ectrica y el voltaje Para esto utilizamos la placa Arduino Leonardo, ya que cuenta con pines de entrada y salida tanto anal\'ogicas como digitales, adem\'as cuenta con un procesador ATmega32u4 que cuenta 32 Kb de memoria flash y 2.5 Kb de memoria SRAM. A pesar de suena como si fuera poca memoria, es m\'as que suficiente, ya que el tama\~no de los sketches (programas de Arduino) que programamos no pasan de los 24 Kb. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.37\textwidth]{unoo.jpg}
+    \caption{Arduino Leonardo + Ethernet Shield}
+    \label{fig:awesome_image}
+\end{figure}
+
+Adem\'as del Arduino, necesitamos un sensor que mida corriente, en este caso utilizamos el sensor de corriente ACS 715, ya que al revisar la hoja de datos del mismo, vimos que tiene una corriente m\'axima de entrada de 30 Amperes, que es m\'as que suficiente para soportar la corriente de una casa. El sensor de corriente se conecta en serie con el cable para suministrar energ\'ia y despu\'es adicionalmente  se conecta  al arduino  en los pines de voltaje , tierra y output para darle energ\'ia al sensor y mandar la se\~nal del sensor al arduino. 
+Despu\'es para poder enviar los datos utilizamos el Ethernet shield el cual permite a una placa Arduino conectarse a internet. Est\'a basada en el chip ethernet Wiznet W5100 (datasheet). El Wiznet W5100 provee de una pila de red IP capaz de TCP y UDP. Soporta hasta cuatro conexiones de sockets simult\'aneas. Usa la librer\'ia Ethernet para escribir programas que se conecten a internet usando la shield. 
+ Para la interpretaci\'on de la medici\'on analizamos el funcionamiento de cada sketch de c\'odigo que proporciona arduino seg\'un las necesidades que se nos iban presentando. Primero fue el de obtenci\'on de lectura de un sensor con el cual visualizamos los datos entregados por el mismo. Despu\'es seguimos con el c\'odigo para comunicaci\'on. Para definir cual utilizar primero buscamos datos sobre la p\'agina de internet y encontramos que arduino ya posee c\'odigos para la implementaci\'on de esta p\'agina en conjunto con el Ethernet shield por lo que solo fue cuesti\'on de observar su funcionamiento y acoplarlo.
+Finalmente para poder obtener la gr\'afica generada descargamos una aplicaci\'on de la misma p\'agina que env\'ia la gr\'afica de medici\'on con la facilidad de definir el tiempo entre su actualizaci\'on o realizarla en el momento que el usuario lo desee.
+
+\subsection{Medir voltaje y corriente y hacer los c\'alculos a mano y comunicar con una operadora}
+
+Esta opci\'on fue la pensada como alternativa final en caso de que ninguna otra fuera viable. Consiste en que una persona tuviera  un amper\'imetro en el cual fuera midiendo el consumo introduciendo los datos a Excel, realizar los c\'alculos y graficar. Ya con la gr\'afica esta se enviar\'ia por mail por el \emph{operador} a la direcci\'on del usuario.
+
+\section{Selecci\'on}
+Para la selecci\'on nos guiamos en las etapas de evaluaci\'on de conceptos. Primero analizamos la factibilidad de cada uno y el \'unico descartado fue el sistema de matraca por la dificultad de su desarrollo ya que requer\'ia de la manufactura y creaci\'on de m\'as partes.
+Al pasar a la etapa de disponibilidad de tecnolog\'ia se descart\'o la propuesta de la c\'amara IP por que no estaba a nuestro alcance ya que resultaba muy costoso, adem\'as de no cumplir con las especificaciones del cliente.
+En la tercera etapa, filtro pasa/no pasa, no se encontr\'o ning\'un impedimento.
+Y finalmente con la matriz de decisi\'on se eligi\'o el sistema basado en arduino ya que resultaba m\'as f\'acil su implementaci\'on que el Raspberry Pi por el lenguaje de programaci\'on utilizado y el sistema con un \emph{operador} por no ser aut\'onomo.
+
+\section{Creaci\'on de prototipos}
+\subsection{Diagrama de interconexiones}
+Se puede observar este diagrama en la figura \ref{fig:awesome_image1}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.47\textwidth]{diagrama.png}
+    \caption{Diagrama de interconexiones}
+    \label{fig:awesome_image1}
+\end{figure}
+\subsection{Sensor y conversi\'on anal\'ogico-digital}
+Tenemos que determinar principalmente el rango de consumo de corriente requerido. De acuerdo al sensor utilizado, mediante la hoja de datos, se realiza una relaci\'on de operaci\'on entre m\'aximos y m\'inimos y determinar si la se\~nal entregada es lo suficientemente grande, de no serlo se requerir\'a de un amplificador operacional para amplificar la se\~nal y que sea legible para arduino.
+Por parte del arduino, los valores de una lectura anal\'ogica van de 0-1023 por lo que se debe hacer una conversi\'on adecuada para el sensor y esto se debe probar hasta que se compruebe que se obtiene una medici\'on precisa y fiable. Esto se logra comparando con instrumentos de medici\'on especializados y corregir el error por medios electr\'onicos o de programaci\'on. Para que esto suceda es necesario tener un amplio campo de comparaci\'on para corroborar la veracidad de nuestro dispositivo.
+
+\subsection{Programa}
+\begin{lstlisting}
+//Código Fuente
+//Gorilla Measure
+//Diseño en Ingeniería
+
+#include <SPI.h>
+#include <Ethernet.h>
+#include <HttpClient.h>
+#include <Xively.h>
+
+// MAC address for your Ethernet shield
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x0F, 0x0A, 0x6F };
+
+// Your Xively key to let you upload data
+char xivelyKey[] = "fwtCQvZOHmMapCUJZKwTFNYVfo BVh454628nx8JuiexLpVl7";
+
+// Analog pin which we're monitoring (0 and 1 are used by the Ethernet shield)
+int sensorPin = A0;
+
+// Define the strings for our datastream IDs
+char sensorId[] = "Sensor de Corriente [RAW]";
+char calculoId[] = "Corriente = Conversión Analógico-Digital";
+char consumoId[] = "Consumo de Energía";
+
+XivelyDatastream datastreams[] = {
+  XivelyDatastream(sensorId,  strlen(sensorId),  DATASTREAM_FLOAT),
+  XivelyDatastream(calculoId, strlen(calculoId), DATASTREAM_FLOAT),
+  XivelyDatastream(consumoId, strlen(consumoId), DATASTREAM_FLOAT),
+};
+// Finally, wrap the datastreams into a feed
+XivelyFeed feed(1151621866, datastreams, 3 /* number of datastreams */);
+
+EthernetClient client;
+XivelyClient xivelyclient(client);
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  
+  Serial.println("Starting multiple datastream upload to Xively...");
+  Serial.println();
+
+  while (Ethernet.begin(mac) != 1)
+  {
+    Serial.println("Error getting IP address via DHCP, trying again...");
+    delay(15000);
+  }
+}
+
+void loop() {
+  long sensorValue = analogRead(sensorPin);
+  ///
+  float calculo= sensorValue -100;
+  float cal=0.025* calculo;
+  float voltaje=127.00;
+  float corriente=sqrt(cal*cal);
+  float potencia=voltaje*corriente;
+  ///
+  datastreams[0].setFloat(sensorValue);
+  datastreams[1].setFloat(cal);
+  datastreams[2].setFloat(potencia);
+  
+  Serial.print("Sensor de Corrente RAM: ");
+  Serial.println(datastreams[0].getFloat());
+  Serial.println("Conversión analógico-digital: ");
+  Serial.println(datastreams[1].getFloat());
+  Serial.println("Consumo de Energía: ");
+  Serial.println(datastreams[2].getFloat());
+  Serial.println();
+  
+  Serial.println("Uploading it to Xively");
+  int ret = xivelyclient.put(feed, xivelyKey);
+  Serial.print("xivelyclient.put returned ");
+  Serial.println(ret);
+
+  Serial.println();
+  delay(15000);
+}
+
+\end{lstlisting}
+\subsection{Comunicaci\'on e Interacci\'on con el usuario}
+
+\emph{?`C\'omo se hizo la comunicaci\'on con el Smartphone?}\\
+
+Si bien la tarjeta Arduino Leonardo nos sirve para procesar los datos provenientes del sensor, a\'un necesitamos un medio para comunicarlo al internet y as\'i poder recibir la informaci\'on directo a nuestro Smartphone. Para eso no s\'olo necesitamos hardware que est\'e disponible en el mercado, sino tambi\'en necesitamos un software que sea capaz de analizar la informaci\'on, as\'i como para llevar a cabo los registros de nuestro consumo de potencia y ver en cuanto tiempo se ha consumido. Para satisfacer nuestras necesidades de comunicaci\'on, utilizamos un Arduino Ethernet Shield, ya que est\'a basado en el chip Wizard W5100. Nos es muy \'util ya que nos provee una conexi\'on a una IP por medio de los protocolos TCP y UDP, \'estos son protocolos de internet que se complementan uno a otro.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.37\textwidth]{un.jpg}
+    \caption{Conexi\'on a Ethernet desde IP est\'atica}
+    \label{fig:awesome_image}
+\end{figure}
+
+Lo primero es cargar nuestro c\'odigo a la placa Arduino, para esto sacamos un c\'odigo de ejemplo que nos viene proporcionado en el IDE propio de Arduino, lo \'unico que tenemos que hacer es introducir en el c\'odigo la direcci\'on MAC de nuestra placa y cargamos el programa en la placa. Esto lo hacemos en primer lugar para asegurarnos de que la placa y el Ethernet shield funcionen \'optimamente, adem\'as, ya que como nos encontramos en una instalaci\'on donde se generan diferentes direcciones IP, necesitamos saber con cual IP estamos trabajando. Para saber si est\'a funcionando, abrimos el monitor serial y nos debe imprimir la direcci\'on IP a la que estamos conectados, de lo contrario nos marcar\'a un error diciendo que no es posible establecer la conexi\'on.
+
+Cabe destacar que en esta etapa tuvimos algo de dificultad, ya que est\'abamos conectando el Ethernet shield a la computadora por medio del cable Ethernet, pero esto no nos funcionaba, ya que descubrimos que cuando una computadora o cualquier dispositivo se conecta a la red inal\'ambrica de La Salle, al ser \'esta una instalaci\'on con un gran n\'umero de equipos, siempre nos da una direcci\'on IP diferente, esto es ya que son IP’s din\'amicas, y para nuestro caso de poder lograra la conexi\'on a internet necesitamos una IP fija. Luego de descifrar que nos ten\'iamos que conectar directamente al m\'odem para lograr la comunicaci\'on, descubrimos que no nos pod\'iamos conectar en cualquier nodo de las instalaciones de la escuela, ya que los nodos que se encuentran en los salones, as\'i como laboratorios y aulas, requieren de una autentificaci\'on, como la que se tiene que dar cuando nos conectamos a la red inal\'ambrica Jean Remy. Por esto, tuvimos que ir a los laboratorios del LCI de la universidad a conectar nuestra placa, ya que los nodos que se encuentran ah\'i no nos piden una autentificaci\'on.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.37\textwidth]{Imagen1.png}
+    \caption{Obtenci\'on del CHCP e IP address}
+    \label{fig:awesome_image}
+\end{figure}
+
+Despu\'es de cerciorarnos de que el c\'odigo y nuestra placa funcionaran, pasamos al manejo del software. Para esto, utilizamos la p\'agina Xively. \'este es una aplicaci\'on que permite conectar la informaci\'on recopilada por sensores a la web, al mismo tiempo haciendo una base de datos, tambi\'en permite elaborar aplicaciones que trabajen con esa informaci\'on. Para esto necesitamos crear una cuenta en la p\'agina con nuestro n\'umero telef\'onico o correo electr\'onico. Al crear una cuenta en la p\'agina, podemos registrar el dispositivo que queremos que transmita los datos a la p\'agina, esto nos da la opci\'on de registrar varios dispositivos a una misma cuenta. Por cada dispositivo que registremos, se nos da una API key y una clave de feed diferente. 
+Ya que tenemos la API key y la clave del feed, los copiamos y los pegamos en el c\'odigo de nuestro Arduino,  esto es para que el Arduino mande la informaci\'on a la p\'agina y pueda desplegar la informaci\'on.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.37\textwidth]{Imagen2.png}
+    \caption{C\'odigo ejemplo y pruebas para la interfaz del usuario}
+    \label{fig:awesome_image}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.37\textwidth]{xively.png}
+    \caption{Interfaz usuario Xively}
+    \label{fig:awesome_image}
+\end{figure}
+Ya que tenemos configurado la conexi\'on del Arduino con la p\'agina s\'olo falta configurar la gr\'afica que se hace con los datos que se transmiten. Lo \'unico que tenemos que configurar es la escala de tiempo de la gr\'afica, las unidades y el nombre del dispositivo. Por \'ultimo hacemos una prueba del Arduino con la p\'agina, para esto le conectamos un potenci\'ometro al Arduino y agregamos la funci\'on AnalogRead() a nuestro programa de transmisi\'on de datos, ya que esa funci\'on nos permite leer una se\~nal de entrada anal\'ogica, cargamos el programa en el Arduino y para verificar que est\'e leyendo la se\~nal de entrada activamos desde el IDE de Arduino el monitor serial y movemos la posici\'on del potenci\'ometro. Si funciona correctamente nos debe de imprimir en la pantalla del monitor serial el voltaje que pasa a trav\'es del potenci\'ometro en una posici\'on dada. Luego verificamos que el Arduino est\'e transmitiendo correctamente a la p\'agina Xively ,para esto nos metemos en la p\'agina y buscamos el dispositivo agregado en nuestra cuenta y revisamos los valores que imprime y la gr\'afica que genera.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.17\textwidth]{uno.jpg}
+    \includegraphics[width=0.17\textwidth]{unooo.jpg}
+    \caption{Interfaz de Usuario iOS \& Android}
+    \label{fig:awesome_image}
+\end{figure}
+
+
+\subsection{Costo del prototipo}
+El desglose del costo se puede observar en la figura \ref{fig:awesome_image22}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.37\textwidth]{Imagen3.png}
+    \caption{Desglose del costo del prototipo}
+    \label{fig:awesome_image22}
+\end{figure}
+
+
+\section{Conclusi\'on}
+\subsection{?`Qu\'e se puede mejorar?}
+Primeramente es la conversi\'on de de CA a CD para tener un valor RMS promedio de consumo y no calculado en un programa.
+Probar con diferentes sensores de medici\'on de corriente y comparar cual otorga un mejor desempe\~no para el uso requerido mediante instrumentos de medici\'on especializados.
+Implementar la medici\'on de voltaje para obtener una lectura realista seg\'un la estabilidad del voltaje en la instalaci\'on y no manejarlo con un promedio supuesto.
+Desarrollar nuestra propia APP que tome la informaci\'on de Xively con una interfaz adecuada para cumplir con las especificaciones y requerimientos del cliente.
+Hacer un dise\~no personalizado del circuito el\'ectrico que posea modulo de comunicaci\'on Ethernet o WiFi y que est\'e dise\~nado espec\'ificamente para nuestra aplicaci\'on ya que el uso del Arduino Leonardo es demasiado para el uso que se le dar\'a, mejor usar un PIC como alternativa. 
+Investigar sobre licencias y patentes para ser capaces de comercializar nuestro producto tanto en cuesti\'on de electr\'onica como para la aplicaci\'on en sistema Android , IOS y Windows mobile
+
+\subsection{?`Se cumplieron los objetivos?}
+En cuanto a los requerimientos  y especificaciones del cliente se cumpli\'o satisfactoriamente con que la interfaz con el usuario sea f\'acil ya que es compatible con cualquier Smartphone y genera una gr\'afica del consumo a trav\'es del tiempo, tambi\'en el que se pueda visualizar la gr\'afica a trav\'es del dispositivo m\'ovil. Otro punto logrado es el que exista un hist\'orico del consumo en una base de datos en internet. Tambi\'en se consigue una medici\'on constante cada minuto y con la opci\'on de que se pueda actualizar a voluntad del usuario y que dicha lectura sea independiente del medidor para poder ser tomada como punto de comparaci\'on.
+Por otro lado no se alcanz\'o el obtener un aviso por alto consumo de energ\'ia por lo que depende del usuario observar la existencia de este revisando el hist\'orico ni el tener una notificaci\'on diaria o semanal de consumo.
+En cuanto al costo no se pudo brindar un estimado ya que el costo de producci\'on del sistema no se ha determinado.
+
+
+
+
+
+\begin{thebibliography}{1}
+
+\bibitem{uno}
+MCI Ltd - Olimex Chile, \emph{Arduino Energy Shield y Pachube}, \url{http://www.olimex.cl/tutorials.php?page=tut_energy_pachube}
+
+\bibitem{dos}
+OpenEnergyMonitor, \emph{How to build an Arduino energy monitor - measuring mains voltage and current}, \url{http://openenergymonitor.org/emon/node/58}
+
+\bibitem{tres}
+Christopher McNally, \emph{ARDUINO BASED WIRELESS POWER METER}, A Design Project Report 
+Presented to the Engineering Division of the Graduate School 
+of Cornell University 
+in Partial Fulfillment of the Requirements for the Degree of 
+Master of Engineering (Electrical), \url{http://people.ece.cornell.edu/land/courses/eceprojectsland/STUDENTPROJ/2009to2010/csm44/DESIGN_REPORT.pdf}
+
+\bibitem{cuatro}
+Xively, \emph{LogMeIn, The Internet of Things}, \url{https://xively.com/}
+
+\bibitem{cinco}
+Arduino, \emph{Arduino Ethernet Shield}, \url{http://arduino.cc/en/Main/ArduinoEthernetShield}
+
+\bibitem{seis}
+Xively, \emph{Xively Libraries: Work in the language of your choice.}, \url{https://xively.com/dev/libraries/}
+
+\bibitem{siete}
+Randofo, Instructables, \emph{Arduino Ethernet Shield Tutorial}, \url{http://www.instructables.com/id/Arduino-Ethernet-Shield-Tutorial/}
+
+\bibitem{ocho}
+Sharelatex, \emph{Code listing}, LaTeX Reference and Guides, \url{http://www.sharelatex.com/learn/Code_listing}
+
+\bibitem{nueve}
+Arduino Company, \emph{Guide to the Arduino Leonardo and Micro}, \url{http://arduino.cc/en/Guide/ArduinoLeonardoMicro?from=Guide.ArduinoLeonardo}
+
+\bibitem{diez}
+Arduino Company, \emph{Librería Ethernet library}, \url{http://arduino.cc/es/Reference/Ethernet#.U0XdNvldVP0}
+\bibitem{once}
+Allegro MicroSystem LC, \emph{Automotive Grade, Fully Integrated, Hall Effect-Based Linear Current Sensor IC
+with 2.1 kVRMS Voltage Isolation and a Low-Resistance Current Conductor, ACS715}, Datasheet
+
+\end{thebibliography}
+
+
+% that's all folks
+\end{document}
